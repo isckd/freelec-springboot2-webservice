@@ -4,6 +4,7 @@
 .gradle
 .idea
 
+#token
 application-oauth.properties
 application-real-oauth.properties
 src/main/resources/application-oauth.properties
