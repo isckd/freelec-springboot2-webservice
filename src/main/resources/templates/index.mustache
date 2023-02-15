@@ -39,7 +39,7 @@
         </table>
     </div>
 
-    <div class="mt-5">
+    <div class="mt-5" style="margin-left: 50px;">
         <p>Windows\System32\drivers\etc\ 경로에 hosts 파일이 있다.</p>
         <p>Linux 환경에서는 /etc/hosts 에 localhost 파일이있음</p>
         <p>hosts 파일 작성 규칙은 </p>
@@ -54,6 +54,109 @@
         <p>이제 뒤에 :8080을 붙이지 않아도 접속이 잘 된다.</p>
         <p>현재 AWS에서 제공해준 도메인은 탄력IP 주소가 포함되고, 리전명이 들어가 길고 지저분하다.</p>
         <p>무료 DNS(no ip)를 빌려서 도메인을 등록해보자.</p>
+        <p>no ip에서 무료 도메인을 발급받았다. AWS EC2 서버의 Public ip인 3.39.149.168을 대상으로</p>
+        <p>yejinuk.ddns.net 의 Hostname을 설정하였고, 접속이 잘 된다.</p>
     </div>
+    <div class="mt-5" style="margin-left: 50px;">
+        <p><b>지속적 통합/배포를 위해 Travis로 진행하려 했으나, 최근 유료로 전환되는 바람에 진행하지 못하였다. </b></p>
+        <p>Jenkins를 활용하는 방법도 있지만, AWS에서 free tier로는 구동하기에 너무 벅차다.</p>
+        <p>고로 업데이트(git push)사항이 생길 때마다 putty에서 deploy.sh를 실행해 git pull, 빌드, 테스트, 배포까지 진행한다. </p>
+        <p>~/app/step1/deploy.sh 경로에 있으니 그대로 입력하면 된다.</p>
+        <p>그런 의미에서 deploy.sh의 코드를 분석해보자.</p>
+        <p>
+            #!/bin/bash<br>
+            <i>//스크립트 파일이 bash 쉘로 실행시킨다는의미. 다만 쉘 스크립트에서 #는 주석기호이지만, 첫 라인의 #!/bin/bash 에서의 #는 주석 기호가 아니라는 점.</i><br><br>
+
+            REPOSITORY=/home/ec2-user/app/step1<br>
+            PROJECT_NAME=freelec-springboot2-webservice<br>
+            <i>//프로젝트 디렉토리 주소는 스크립트 내에서 자주 사용하는 값이기 때문에 저장해둔다. 쉘에서는 타입 없이 선언하여 저장한다.</i><br><br>
+
+            cd $REPOSITORY/$PROJECT_NAME/<br>
+            <i>//제일 처음 git clone 받았던 디렉토리로 이동한다. 바로 이의 쉘 변수명을 따라 이동한다.</i><br><br>
+
+            echo "> Git Pull"<br>
+            <i>// Git Pull 하기 전에 해당 문구를 출력한다.</i><br><br>
+
+            git pull<br>
+            <i>//디렉토리 이동 후, master 브랜치의 최신 내용을 받는다.</i><br><br>
+
+            echo "> 프로젝트 Build 시작"<br>
+            <i>//build 시작 전 해당 문구 출력</i><br><br>
+
+            ./gradlew build<br>
+            <i>프로젝트 내부의 gradlew로 build를 수행한다. gradlew  = gradlew wrapper 파일</i><br><br>
+
+            echo "> step1 디렉토리로 이동"<br>
+            <i>디렉토리 이동 전 문구 출력</i><br><br>
+
+            cd $REPOSITORY<br>
+            <i>아까 지정한 REPOSITORY 변수의 경로로 이동한다.</i><br><br>
+
+            echo "> Build 파일 복사"<br>
+            <i>Build된 파일 복사 전에 문구 출력</i><br><br>
+
+            cp $REPOSITORY/$PROJECT_NAME/build/libs/*.jar $REPOSITORY/<br>
+            <i>build의 결과물인 jar 파일을 복사해 jar 파일을 모아둔 위치로 복사한다.</i><br><br>
+
+            echo "> 현재 구동중인 애플리케이션 pid 확인"<br>
+            <i>pid 확인 전 문구 출력</i><br><br>
+
+            CURRENT_PID=$(pgrep -f ${PROJECT_NAME}.*.jar)<br>
+            <i>기존 수행중이던 springboot 애플리케이션 종료. prgrep은 process id만 추출하는 명령어. -f 옵션은 프로세스 이름으로 찾는다.</i><br><br>
+
+            echo "현재 구동 중인 애플리케이션 pid: $CURRENT_PID"<br>
+            <i>pid를 출력하는 문구</i><br><br>
+
+            if [ -z "$CURRENT_PID" ]; then<br>
+            &nbsp;echo "> 현재 구동 중인 애플리케이션이 없으므로 종료하지 않습니다."<br>
+            else<br>
+            &nbsp;echo "> kill -15 $CURRENT_PID"<br>
+            &nbsp;kill -15 $CURRENT_PID<br>
+            &nbsp;sleep 5<br>
+            fi<br>
+            <i>현재 구동 중인 프로세스가 있는지 없는지를 판단해 기능 수행. process id 값을 보고 프로세스가 있으면 해당 프로세스를 종료한다.<br>
+            kill -15는 소프트웨어 종료 시그널이다. 추가적으로 kill - 9는 강제종료의 의미를 지닌다. sleep 5는 5초간 정지란 뜻.</i><br><br>
+
+            echo "> 새 애플리케이션 배포"<br>
+            <i>배포 전 문구를 출력한다.</i><br><br>
+
+            JAR_NAME=$(ls -tr $REPOSITORY/ | grep jar | tail -n 1)<br>
+            <i>새로 실행할 jar 파일명을 찾고, 여러 jar 파일이 생기기 때문에 tail -n으로 가장 나중의 jar 파일을 변수에 저장한다.</i><br><br>
+
+            echo "> JAR Name: $JAR_NAME"<br>
+            <i>선언된 JAR_NAME을 출력한다.</i><br><br>
+
+            nohup java -jar $REPOSITORY/$JAR_NAME 2>&1 &<br>
+            <i>찾은 jar 파일명으로 해당 jar 파일을 nohup으로 실행한다. Springboot의 내장 WAS(톰캣)으로 구동되며<br>
+            jar파일만 있으면 바로 웹 애플리케이션 서버를 실행할 수 있다. 일반적으로 자바를 실행할 때는 java -jar<br>
+            라는 명령어를 사용하지만, 이렇게하면 사용자가 터미널 접속을 끊을 때 애플리케이션도 같이 종료되므로, 터미널을 종료해도<br>
+            계속 구동할 수 있도록 nohup 명령어를 사용한다.</i><br><br>
+
+            nohup java -jar \
+            -Dspring.config.location=classpath:/application.properties,/home/ec2-user/app/application-oauth.properties \
+            $REPOSITORY/$JAR_NAME 2>&1 &<br>
+            <i>이번엔 외부 Security 파일을 등록해보자. Git에 올라온 Repository에는 Gitignore로 인해 인증 토큰 정보가 없기 때문에, <br>
+            Git 말고 외부에서 불러와야 한다. vim /home/ec2-user/app/application-oauth.properties 명령어로 vim 모드로 진입해<br>
+            로컬에서 작성한 코드를 그대로 붙여넣는다.(application-oauth.properties) 이후에 여기 deploy.sh 파일에 들어와서 위 코드를 작성하면 되는데,<br>
+            -Dspring.config.locaion 은 스프링 설정 파일 위치를 지정한다.기본 옵션들의 위치를 지정하고, classpath가 붙으면 jar 안에 있는 <br>
+            resources 디렉토리를 기준으로 경로가 생성된다. applicatoin-oauth.properties는 외부에 있기 때문에 절대경로를 사용한다.
+            저장하고 deploy.sh 를 실행 후, vim nohup.out을 실행해 출력된 내용 볼 수 있음.</i><br><br>
+
+            nohup java -jar \
+            -Dspring.config.location=classpath:/application.properties,/home/ec2-user/app/application-oauth.properties,/home/ec2-user/app/application-real-db.properties,classpath:/application-real.properties \
+            -Dspring.profiles.active=real \
+            $REPOSITORY/$JAR_NAME 2>&1 &<br>
+            <i>이전과 마찬가지로 application-real-db.properties는 보호되어야 하므로, git이 아닌 외부에서 불러온다.</i>
+
+
+
+
+
+
+
+        </p>
+
+    </div>
+
 
 {{>layout/footer}}
