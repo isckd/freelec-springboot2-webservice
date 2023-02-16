@@ -63,6 +63,7 @@
         <p>고로 업데이트(git push)사항이 생길 때마다 putty에서 deploy.sh를 실행해 git pull, 빌드, 테스트, 배포까지 진행한다. </p>
         <p>~/app/step1/deploy.sh 경로에 있으니 그대로 입력하면 된다.</p>
         <p>그런 의미에서 deploy.sh의 코드를 분석해보자.</p>
+        <p>----------------------------------------------------------------------------------------------------------------------------------</p>
         <p>
             #!/bin/bash<br>
             <i>//스크립트 파일이 bash 쉘로 실행시킨다는의미. 다만 쉘 스크립트에서 #는 주석기호이지만, 첫 라인의 #!/bin/bash 에서의 #는 주석 기호가 아니라는 점.</i><br><br>
@@ -147,14 +148,118 @@
             -Dspring.profiles.active=real \
             $REPOSITORY/$JAR_NAME 2>&1 &<br>
             <i>이전과 마찬가지로 application-real-db.properties는 보호되어야 하므로, git이 아닌 외부에서 불러온다.</i>
-
-
-
-
-
-
-
         </p>
+
+        <div class="mt-5">
+            <h2 class="mb-3">JenKins 설치 전 AWS EC2 의 메모리를 증가시켜보자.</h2>
+            <p><b>현재 내가 사용하고 있는 EC2 free tier의 메모리는 겨우 1GB이다. 이것만으로 Jenkins를 추가로 돌리면<br>
+            AWS 메모리 오버로 멈춰버린다는 글을 많이 보았다. 그래서 swap 명령어를 사용해보려 한다.</b></p><br>
+            <p>swap 메모리는리눅스에서 swap 공간을 사용하는 메모리를 의미한다. 만약 OS에서 메모리를 full로 사용하고 있다면,<br>
+            사용하지 않는 메모리 안의 페이지를 하드드라이브에 저장하게 되는데, 이게 swap 메모리의 기본 개념이다.</p>
+            <p>메모리의 대체개념으로 사용가능하지만, 메모리를 100% 대체할 수는 없다. 사용하지 않는 메모리 내의 페이지만<br>
+            보관하는 용도로 사용해야 한다. CPU에서 I/O의 작업과 일반 하드드라이브의 I/O 속도 개념이 다르기 때문이다.</p>
+            <p>AWS에서도 EC2 free tier에서 메모리 부족 현상을 해결하기 위해 swap memory 할당하는 방법이 있다.</p>
+            <p>RAM이 2GB 이하에서는 swap space를 2배로 설정하는 것을 권장하기 때문에, 2GB를 swap space로 지정해보자.</p><br>
+            <p>아래는 putty에서의 설정 코드들이다.</p>
+            <p>----------------------------------------------------------------------------------------------------------------------------------</p>
+            <p> sudo dd if=/dev/zero of=/swapfile bs=128M count 16</p>
+            <p><i>dd 명령어로 swap 메모리를 할당해보자. swap space의 기본 용량단위는 128M이고, AWS 프리티어의 경우 RAM이 1GB이기<br>
+                때문에 2GB의 swap sapce를 할당하기 위해서 count=16으로 설정해준다.</i></p>
+            <p> sudo chmod 600 /swapfile</p>
+            <p> <i>스왑 파일 Read / Write 권한을 변경한다.</i></p>
+            <p> sudo mkswap /swapfile
+            <p> <i>Linux SWAP File을 사용해서 영역을 설정한다.</i></p>
+            <p> sudo swapon /swapfile </p>
+            <p> <i>SWAP Space에  SWAP File을 추가해준다.</i></p>
+            <p> sudo swapon -s</p>
+            <p><i> 추가된 SWAP 영역을 확인한다.</i></p>
+            <p> sudo vi /etc/fstab</p>
+            <p> /swapfile swap swap defaults 0 0</p>
+            <p> <i>서버를 Reboot할 경우 SWAP을 자동으로 활성화하기 위해 /etc/fstab파일을 열어 해당 내용을 추가한다.</i></p>
+            <p> <i>SWAP Space 설정 완료. free -h 명령어로 확인해보자.</i></p>
+            <img src="/images/1.png">
+            <p>잘 적용된 것을 확인할 수 있다.</p>
+        </div>
+        <div>
+            <h2>Jenkins 적용하기</h2>
+
+            <p>sudo yum -y update</p>
+            <p><i>yum 최신화</i></p><br><br>
+
+            <p>sudo yum remove java-1.7.0-openjdk</p>
+            <p>$ sudo yum install java-1.8.0</p>
+            <p><i>AWS Linux에 기본으로 설치된 자바버전은 7이지만, Jenkins는 Java 8버전이 필요하므로 7버전은 지우고 <br> 8버전으로 재설치한다.</i></p><br><br>
+
+            <p>sudo wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo</p>
+            <p><i>yum이 어디서 jenkins를 설치해야 할지 알 수 있도록 Jenkins repository를 추가한다.</i></p><br><br>
+
+            <p>sudo rpm --import http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key</p>
+            <p><i>Jenkins를 설치할 때, 파일들이 신뢰할 수 있는 source로부터 제공됨을 증명하기 위해 로컬 GPG 키링에 Jenkins GPG Key를 추가하낟.</i></p><br><br>
+
+            <p>sudo yum install jenkins</p>
+            <p><i>이제 Jenkins를 설치한다.</i></p><br><br>
+
+            <p>sudo service jenkins start</p>
+            <p><i>Jenkins를 설치하자.</i></p><br><br>
+
+            <p>netstat -na | grep 8080</p>
+            <p><i>8080포트를 사용하고 있는지 확인한다.</i></p><br><br>
+
+            <p>여기서 주의할 점은, Jenkins는 기본적으로 8080로트를 사용하므로 기존에 8080포트를 사용하고 있다면 중복되어 시작이 되지 않는다.<br>
+            그러면 8080포트로 접속해보자.</p>
+
+            <p>sudo vim /etc/sysconfig/jenkins</p>
+            <p><i>위 명령어를 통해 jenkins 설정 파일에 들어가고, "8080" 이라는 포트를 8090으로 변경해보자.</i></p><br><br>
+
+            <p>sudo vim /usr/lib/systemd/system/jenkins.service</p>
+            <p><i>간혹 이전 설정을 해도 먹히지 않는 경우가 있다. 그럴 경우엔 위 스크립트에서도 8080을 8090으로 접속해보자.</i></p><br><br>
+
+            <p>8090포트로 접속하기로 설정했으니 AWS EC2에서도 8090포트를 열어주어야 한다. 해당 인스턴스의 보안 그룹에서 인바운드 규칙을 편집해, 8090포트를 열어주자.</p>
+
+            <p><b>그런데도 자꾸 오류가 났다. 구글링을 해보고, 여러 방법을 찾아봐도 나오는 해결책은 두 가지 뿐이었다.<br>
+            포트 관련 문제(포트 중복 or AWS 포트를 열지 않았다던가), 자바 버전 문제밖에 없었다.<br>
+            에러 로그를 검색해보니 포트 문제라는 의견이 대다수라, 포트 설정도 다시 해보고 리눅스 환경도 갈아엎어보고 별 짓을 다했지만 해결되지 않았다.<br>
+            자바 버전도 SpringBoot 프로젝트에서 사용한 1.8.0버전을 맞추었고, 다른 사람들도 1.8.0 버전을 사용하는 것을 보아 자바 버전에서도 문제가 없다고 여겼었다.<br>
+            거의 반나절동안 이거 하나만 붙잡다가 문득 떠오른 생각이, 이전의 코드를 보면 최신 버전의 Jenkins를 설치했었는데, 해당 Jenkins 버전에서는 Java8을 지원하지 않는 것이 아닐까?<br>
+            하는 생각이 문득 들어 Jenkins 공식 DOC 문서를 찾아보았다. 역시나... https://www.jenkins.io/doc/administration/requirements/java/ 를 살펴보면<br>
+            최신 버전의 Jenkins는 Java 8을 지원하지 않고, Java 11이나 17버전만 지원한다는 내용이 써져 있다.<br>
+            그래서 기존 자바 1.8.0 버전을 지우고, 새로 11 버전을 설치해보앗다.</b>
+            </p>
+
+            <p>yum list | grep jdk</p>
+            <p><i>설치할 수 있는 java 버전을 확인한다. yum 패키지에서는 1.8.0버전까지만 설치할 수 있다고 나온다.</i></p><br><br>
+
+            <p>yum list installed | grep "java"</p>
+            <p><i>설치된 java 버전을 확인한다.</i></p><br><br>
+
+            <p>yum remove java-1.8.0-openjdk-headless.x86_64</p>
+            <p><i>나는 1.8.0 버전이 설치되어 있으므로, 해당 버전을 삭제한다.</i></p><br><br>
+
+            <p>sudo curl -L https://corretto.aws/downloads/latest/amazon-corretto-11-x64-linux-jdk.rpm -o jdk11.rpm</p>
+            <p><i>aws coreetto를 다운로드한다.</i></p><br><br>
+
+            <p>sudo yum localinstall jdk11.rpm</p>
+            <p><i>jdk 11버전을 설치한다.</i></p><br><br>
+
+            <p>sudo /usr/sbin/alternatives --config java</p>
+            <p><i>설치할 java version을 선택한다. 최신 버전을 고르면 된다.</i></p><br><br>
+
+            <p>java --version</p>
+            <p><i>설치된 java version을 확인한다.</i></p><br><br>
+
+            <p>rm -rf jdk11.rpm</p>
+            <p><i>다운받은 설치 키트를 제거한다.</i></p><br><br>
+
+            <p>이제 위로 다시 돌아가서, jenkins를 재설치해주고, 포트도 8090으로 바꾸고, AWS EC2 보안그룹 인바운드도 8090포트가 열려있는지 확인하고 다시 Jenkins를 실행해보자.<br>
+            이제 잘 된다.</p>
+
+            <p></p>
+            <p><i></i></p><br><br>
+
+
+
+
+        </div>
 
     </div>
 
