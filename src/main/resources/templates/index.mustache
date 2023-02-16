@@ -64,91 +64,91 @@
         <p>~/app/step1/deploy.sh 경로에 있으니 그대로 입력하면 된다.</p>
         <p>그런 의미에서 deploy.sh의 코드를 분석해보자.</p>
         <p>----------------------------------------------------------------------------------------------------------------------------------</p>
-        <p>
-            #!/bin/bash<br>
-            <i>//스크립트 파일이 bash 쉘로 실행시킨다는의미. 다만 쉘 스크립트에서 #는 주석기호이지만, 첫 라인의 #!/bin/bash 에서의 #는 주석 기호가 아니라는 점.</i><br><br>
+            <p>
+                #!/bin/bash<br>
+                <i>//스크립트 파일이 bash 쉘로 실행시킨다는의미. 다만 쉘 스크립트에서 #는 주석기호이지만, 첫 라인의 #!/bin/bash 에서의 #는 주석 기호가 아니라는 점.</i><br><br>
 
-            REPOSITORY=/home/ec2-user/app/step1<br>
-            PROJECT_NAME=freelec-springboot2-webservice<br>
-            <i>//프로젝트 디렉토리 주소는 스크립트 내에서 자주 사용하는 값이기 때문에 저장해둔다. 쉘에서는 타입 없이 선언하여 저장한다.</i><br><br>
+                REPOSITORY=/home/ec2-user/app/step1<br>
+                PROJECT_NAME=freelec-springboot2-webservice<br>
+                <i>//프로젝트 디렉토리 주소는 스크립트 내에서 자주 사용하는 값이기 때문에 저장해둔다. 쉘에서는 타입 없이 선언하여 저장한다.</i><br><br>
 
-            cd $REPOSITORY/$PROJECT_NAME/<br>
-            <i>//제일 처음 git clone 받았던 디렉토리로 이동한다. 바로 이의 쉘 변수명을 따라 이동한다.</i><br><br>
+                cd $REPOSITORY/$PROJECT_NAME/<br>
+                <i>//제일 처음 git clone 받았던 디렉토리로 이동한다. 바로 이의 쉘 변수명을 따라 이동한다.</i><br><br>
 
-            echo "> Git Pull"<br>
-            <i>// Git Pull 하기 전에 해당 문구를 출력한다.</i><br><br>
+                echo "> Git Pull"<br>
+                <i>// Git Pull 하기 전에 해당 문구를 출력한다.</i><br><br>
 
-            git pull<br>
-            <i>//디렉토리 이동 후, master 브랜치의 최신 내용을 받는다.</i><br><br>
+                git pull<br>
+                <i>//디렉토리 이동 후, master 브랜치의 최신 내용을 받는다.</i><br><br>
 
-            echo "> 프로젝트 Build 시작"<br>
-            <i>//build 시작 전 해당 문구 출력</i><br><br>
+                echo "> 프로젝트 Build 시작"<br>
+                <i>//build 시작 전 해당 문구 출력</i><br><br>
 
-            ./gradlew build<br>
-            <i>프로젝트 내부의 gradlew로 build를 수행한다. gradlew  = gradlew wrapper 파일</i><br><br>
+                ./gradlew build<br>
+                <i>프로젝트 내부의 gradlew로 build를 수행한다. gradlew  = gradlew wrapper 파일</i><br><br>
 
-            echo "> step1 디렉토리로 이동"<br>
-            <i>디렉토리 이동 전 문구 출력</i><br><br>
+                echo "> step1 디렉토리로 이동"<br>
+                <i>디렉토리 이동 전 문구 출력</i><br><br>
 
-            cd $REPOSITORY<br>
-            <i>아까 지정한 REPOSITORY 변수의 경로로 이동한다.</i><br><br>
+                cd $REPOSITORY<br>
+                <i>아까 지정한 REPOSITORY 변수의 경로로 이동한다.</i><br><br>
 
-            echo "> Build 파일 복사"<br>
-            <i>Build된 파일 복사 전에 문구 출력</i><br><br>
+                echo "> Build 파일 복사"<br>
+                <i>Build된 파일 복사 전에 문구 출력</i><br><br>
 
-            cp $REPOSITORY/$PROJECT_NAME/build/libs/*.jar $REPOSITORY/<br>
-            <i>build의 결과물인 jar 파일을 복사해 jar 파일을 모아둔 위치로 복사한다.</i><br><br>
+                cp $REPOSITORY/$PROJECT_NAME/build/libs/*.jar $REPOSITORY/<br>
+                <i>build의 결과물인 jar 파일을 복사해 jar 파일을 모아둔 위치로 복사한다.</i><br><br>
 
-            echo "> 현재 구동중인 애플리케이션 pid 확인"<br>
-            <i>pid 확인 전 문구 출력</i><br><br>
+                echo "> 현재 구동중인 애플리케이션 pid 확인"<br>
+                <i>pid 확인 전 문구 출력</i><br><br>
 
-            CURRENT_PID=$(pgrep -f ${PROJECT_NAME}.*.jar)<br>
-            <i>기존 수행중이던 springboot 애플리케이션 종료. prgrep은 process id만 추출하는 명령어. -f 옵션은 프로세스 이름으로 찾는다.</i><br><br>
+                CURRENT_PID=$(pgrep -f ${PROJECT_NAME}.*.jar)<br>
+                <i>기존 수행중이던 springboot 애플리케이션 종료. prgrep은 process id만 추출하는 명령어. -f 옵션은 프로세스 이름으로 찾는다.</i><br><br>
 
-            echo "현재 구동 중인 애플리케이션 pid: $CURRENT_PID"<br>
-            <i>pid를 출력하는 문구</i><br><br>
+                echo "현재 구동 중인 애플리케이션 pid: $CURRENT_PID"<br>
+                <i>pid를 출력하는 문구</i><br><br>
 
-            if [ -z "$CURRENT_PID" ]; then<br>
-            &nbsp;echo "> 현재 구동 중인 애플리케이션이 없으므로 종료하지 않습니다."<br>
-            else<br>
-            &nbsp;echo "> kill -15 $CURRENT_PID"<br>
-            &nbsp;kill -15 $CURRENT_PID<br>
-            &nbsp;sleep 5<br>
-            fi<br>
-            <i>현재 구동 중인 프로세스가 있는지 없는지를 판단해 기능 수행. process id 값을 보고 프로세스가 있으면 해당 프로세스를 종료한다.<br>
-            kill -15는 소프트웨어 종료 시그널이다. 추가적으로 kill - 9는 강제종료의 의미를 지닌다. sleep 5는 5초간 정지란 뜻.</i><br><br>
+                if [ -z "$CURRENT_PID" ]; then<br>
+                &nbsp;echo "> 현재 구동 중인 애플리케이션이 없으므로 종료하지 않습니다."<br>
+                else<br>
+                &nbsp;echo "> kill -15 $CURRENT_PID"<br>
+                &nbsp;kill -15 $CURRENT_PID<br>
+                &nbsp;sleep 5<br>
+                fi<br>
+                <i>현재 구동 중인 프로세스가 있는지 없는지를 판단해 기능 수행. process id 값을 보고 프로세스가 있으면 해당 프로세스를 종료한다.<br>
+                kill -15는 소프트웨어 종료 시그널이다. 추가적으로 kill - 9는 강제종료의 의미를 지닌다. sleep 5는 5초간 정지란 뜻.</i><br><br>
 
-            echo "> 새 애플리케이션 배포"<br>
-            <i>배포 전 문구를 출력한다.</i><br><br>
+                echo "> 새 애플리케이션 배포"<br>
+                <i>배포 전 문구를 출력한다.</i><br><br>
 
-            JAR_NAME=$(ls -tr $REPOSITORY/ | grep jar | tail -n 1)<br>
-            <i>새로 실행할 jar 파일명을 찾고, 여러 jar 파일이 생기기 때문에 tail -n으로 가장 나중의 jar 파일을 변수에 저장한다.</i><br><br>
+                JAR_NAME=$(ls -tr $REPOSITORY/ | grep jar | tail -n 1)<br>
+                <i>새로 실행할 jar 파일명을 찾고, 여러 jar 파일이 생기기 때문에 tail -n으로 가장 나중의 jar 파일을 변수에 저장한다.</i><br><br>
 
-            echo "> JAR Name: $JAR_NAME"<br>
-            <i>선언된 JAR_NAME을 출력한다.</i><br><br>
+                echo "> JAR Name: $JAR_NAME"<br>
+                <i>선언된 JAR_NAME을 출력한다.</i><br><br>
 
-            nohup java -jar $REPOSITORY/$JAR_NAME 2>&1 &<br>
-            <i>찾은 jar 파일명으로 해당 jar 파일을 nohup으로 실행한다. Springboot의 내장 WAS(톰캣)으로 구동되며<br>
-            jar파일만 있으면 바로 웹 애플리케이션 서버를 실행할 수 있다. 일반적으로 자바를 실행할 때는 java -jar<br>
-            라는 명령어를 사용하지만, 이렇게하면 사용자가 터미널 접속을 끊을 때 애플리케이션도 같이 종료되므로, 터미널을 종료해도<br>
-            계속 구동할 수 있도록 nohup 명령어를 사용한다.</i><br><br>
+                nohup java -jar $REPOSITORY/$JAR_NAME 2>&1 &<br>
+                <i>찾은 jar 파일명으로 해당 jar 파일을 nohup으로 실행한다. Springboot의 내장 WAS(톰캣)으로 구동되며<br>
+                jar파일만 있으면 바로 웹 애플리케이션 서버를 실행할 수 있다. 일반적으로 자바를 실행할 때는 java -jar<br>
+                라는 명령어를 사용하지만, 이렇게하면 사용자가 터미널 접속을 끊을 때 애플리케이션도 같이 종료되므로, 터미널을 종료해도<br>
+                계속 구동할 수 있도록 nohup 명령어를 사용한다.</i><br><br>
 
-            nohup java -jar \
-            -Dspring.config.location=classpath:/application.properties,/home/ec2-user/app/application-oauth.properties \
-            $REPOSITORY/$JAR_NAME 2>&1 &<br>
-            <i>이번엔 외부 Security 파일을 등록해보자. Git에 올라온 Repository에는 Gitignore로 인해 인증 토큰 정보가 없기 때문에, <br>
-            Git 말고 외부에서 불러와야 한다. vim /home/ec2-user/app/application-oauth.properties 명령어로 vim 모드로 진입해<br>
-            로컬에서 작성한 코드를 그대로 붙여넣는다.(application-oauth.properties) 이후에 여기 deploy.sh 파일에 들어와서 위 코드를 작성하면 되는데,<br>
-            -Dspring.config.locaion 은 스프링 설정 파일 위치를 지정한다.기본 옵션들의 위치를 지정하고, classpath가 붙으면 jar 안에 있는 <br>
-            resources 디렉토리를 기준으로 경로가 생성된다. applicatoin-oauth.properties는 외부에 있기 때문에 절대경로를 사용한다.
-            저장하고 deploy.sh 를 실행 후, vim nohup.out을 실행해 출력된 내용 볼 수 있음.</i><br><br>
+                nohup java -jar \
+                -Dspring.config.location=classpath:/application.properties,/home/ec2-user/app/application-oauth.properties \
+                $REPOSITORY/$JAR_NAME 2>&1 &<br>
+                <i>이번엔 외부 Security 파일을 등록해보자. Git에 올라온 Repository에는 Gitignore로 인해 인증 토큰 정보가 없기 때문에, <br>
+                Git 말고 외부에서 불러와야 한다. vim /home/ec2-user/app/application-oauth.properties 명령어로 vim 모드로 진입해<br>
+                로컬에서 작성한 코드를 그대로 붙여넣는다.(application-oauth.properties) 이후에 여기 deploy.sh 파일에 들어와서 위 코드를 작성하면 되는데,<br>
+                -Dspring.config.locaion 은 스프링 설정 파일 위치를 지정한다.기본 옵션들의 위치를 지정하고, classpath가 붙으면 jar 안에 있는 <br>
+                resources 디렉토리를 기준으로 경로가 생성된다. applicatoin-oauth.properties는 외부에 있기 때문에 절대경로를 사용한다.
+                저장하고 deploy.sh 를 실행 후, vim nohup.out을 실행해 출력된 내용 볼 수 있음.</i><br><br>
 
-            nohup java -jar \
-            -Dspring.config.location=classpath:/application.properties,/home/ec2-user/app/application-oauth.properties,/home/ec2-user/app/application-real-db.properties,classpath:/application-real.properties \
-            -Dspring.profiles.active=real \
-            $REPOSITORY/$JAR_NAME 2>&1 &<br>
-            <i>이전과 마찬가지로 application-real-db.properties는 보호되어야 하므로, git이 아닌 외부에서 불러온다.</i>
-        </p>
+                nohup java -jar \
+                -Dspring.config.location=classpath:/application.properties,/home/ec2-user/app/application-oauth.properties,/home/ec2-user/app/application-real-db.properties,classpath:/application-real.properties \
+                -Dspring.profiles.active=real \
+                $REPOSITORY/$JAR_NAME 2>&1 &<br>
+                <i>이전과 마찬가지로 application-real-db.properties는 보호되어야 하므로, git이 아닌 외부에서 불러온다.</i>
+            </p>
 
         <div class="mt-5">
             <h2 class="mb-3">JenKins 설치 전 AWS EC2 의 메모리를 증가시켜보자.</h2>
@@ -206,13 +206,20 @@
             <p><i>8080포트를 사용하고 있는지 확인한다.</i></p><br><br>
 
             <p>여기서 주의할 점은, Jenkins는 기본적으로 8080로트를 사용하므로 기존에 8080포트를 사용하고 있다면 중복되어 시작이 되지 않는다.<br>
-            그러면 8080포트로 접속해보자.</p>
+            그러면 8090포트로 접속해보자.</p>
 
             <p>sudo vim /etc/sysconfig/jenkins</p>
             <p><i>위 명령어를 통해 jenkins 설정 파일에 들어가고, "8080" 이라는 포트를 8090으로 변경해보자.</i></p><br><br>
 
             <p>sudo vim /usr/lib/systemd/system/jenkins.service</p>
             <p><i>간혹 이전 설정을 해도 먹히지 않는 경우가 있다. 그럴 경우엔 위 스크립트에서도 8080을 8090으로 접속해보자.</i></p><br><br>
+
+            <p>sudo systemctl daemon-reload </p>
+            <p>sudo systemctl restart jenkins.service</p>
+            <p><i>변경사항을 적용 후 reload, 재시작 한다.</i></p>
+
+            <p>sudo systemctl status jenkins.service</p>
+            <p><i>오류가 난다면 위 코드를 실행해 로그를 살펴보자.</i></p>
 
             <p>8090포트로 접속하기로 설정했으니 AWS EC2에서도 8090포트를 열어주어야 한다. 해당 인스턴스의 보안 그룹에서 인바운드 규칙을 편집해, 8090포트를 열어주자.</p>
 
@@ -222,7 +229,7 @@
             자바 버전도 SpringBoot 프로젝트에서 사용한 1.8.0버전을 맞추었고, 다른 사람들도 1.8.0 버전을 사용하는 것을 보아 자바 버전에서도 문제가 없다고 여겼었다.<br>
             거의 반나절동안 이거 하나만 붙잡다가 문득 떠오른 생각이, 이전의 코드를 보면 최신 버전의 Jenkins를 설치했었는데, 해당 Jenkins 버전에서는 Java8을 지원하지 않는 것이 아닐까?<br>
             하는 생각이 문득 들어 Jenkins 공식 DOC 문서를 찾아보았다. 역시나... https://www.jenkins.io/doc/administration/requirements/java/ 를 살펴보면<br>
-            최신 버전의 Jenkins는 Java 8을 지원하지 않고, Java 11이나 17버전만 지원한다는 내용이 써져 있다.<br>
+            최신 버전의 Jenkins는 Java 8을 지원하지 않고, Java 11이나 17버전만 지원한다는 내용이 써져 있다. <del>빡친다.</del><br>
             그래서 기존 자바 1.8.0 버전을 지우고, 새로 11 버전을 설치해보앗다.</b>
             </p>
 
@@ -253,12 +260,12 @@
             <p>이제 위로 다시 돌아가서, jenkins를 재설치해주고, 포트도 8090으로 바꾸고, AWS EC2 보안그룹 인바운드도 8090포트가 열려있는지 확인하고 다시 Jenkins를 실행해보자.<br>
             이제 잘 된다.</p>
 
-            <p></p>
-            <p><i></i></p><br><br>
+        </div>
 
-
-
-
+        <div>
+            jenkins가 스스로 도커 컨테이너를 이용해 빌드와 테스트를 할 수 있도록 해보자.
+            추가로 GitLab Webhook을 이용해 자동 빌드까지!
+            (여기서 Docker가 하는 역할이 뭔지??)
         </div>
 
     </div>
