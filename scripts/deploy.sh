@@ -3,6 +3,7 @@
 REPOSITORY=/home/ec2-user/app/step2
 PROJECT_NAME=freelec-springboot2-webservice
 
+sudo chmod +x /var/lib/jenkins/workspace/yejinuk
 sudo chmod +x /home/ec2-user/freelec-springboot2-webservice/gradlew
 
 echo "> Build 파일 복사"
